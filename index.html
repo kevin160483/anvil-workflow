@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anvil TW — 從 RD 到量產：十一關，一條線</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Sans+TC:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg:#fff;--ink:#1D211E;--ink2:#666C68;--ink3:#9AA09C;--line:#E4E7E4;--line2:#F1F3F1;--bg2:#F7F8F7;
+ --adm:#1C5C7A;--admbg:#E9F2F6;--admln:#BBD6E2;
+ --rd:#9C5A0C;--rdbg:#FBF0E2;--rdln:#E8CFA8;
+ --hw:#2F6B4F;--hwbg:#E7F1EB;--hwln:#B8D8C6;
+ --sys:#5B4494;--sysbg:#EFEBF7;--sysln:#CFC4E6;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:15px;line-height:1.7;
+ font-family:"IBM Plex Sans","IBM Plex Sans TC",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-weight:600;line-height:1.3;margin:0}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--rd);outline-offset:3px}
+.w{max-width:1060px;margin:0 auto;padding:0 28px}
+
+nav{position:sticky;top:0;z-index:9;background:rgba(255,255,255,.96);border-bottom:1px solid var(--line)}
+nav .w{display:flex;align-items:center;gap:17px;height:52px;overflow-x:auto}
+nav b{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.08em;color:var(--ink2);font-weight:500;white-space:nowrap}
+nav a{color:var(--ink2);text-decoration:none;font-size:13.5px;white-space:nowrap}
+nav a:hover{color:var(--ink)}
+.lang{margin-left:auto;display:flex;gap:3px;flex-shrink:0}
+.lang button{font-size:12.5px;padding:3px 9px;border:1px solid var(--line);color:var(--ink2)}
+.lang button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+header{padding:64px 0 4px}
+h1{font-size:37px;letter-spacing:-.02em;max-width:17ch}
+.lede{color:var(--ink2);margin:16px 0 0;max-width:50ch}
+
+section{padding:0 0 62px;scroll-margin-top:60px}
+.shead{display:flex;align-items:center;gap:16px;margin:0 0 26px;padding-top:50px;border-top:2px solid var(--ink)}
+.shead .num{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:#fff;
+ background:var(--ink);padding:3px 10px;border-radius:3px}
+.shead .nm{font-size:14px;color:var(--ink2);letter-spacing:.02em}
+
+h2{font-size:24px;letter-spacing:-.01em;max-width:26ch}
+.say{color:var(--ink2);max-width:62ch;margin:12px 0 0}
+h3.sub{font-size:18px;margin-top:48px}
+
+/* chips */
+.chip{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:500;
+ padding:1px 7px;border-radius:3px;white-space:nowrap;line-height:1.6}
+.ADM{background:var(--admbg);color:var(--adm)} .RD{background:var(--rdbg);color:var(--rd)}
+.HW{background:var(--hwbg);color:var(--hw)} .SYS{background:var(--sysbg);color:var(--sys)}
+
+/* org */
+.org{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;margin-top:24px}
+@media(max-width:900px){.org{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ogrp{border-top:3px solid;padding-top:12px}
+.ogrp.aADM{border-color:var(--adm)} .ogrp.aRD{border-color:var(--rd)}
+.ogrp.aHW{border-color:var(--hw)} .ogrp.aSYS{border-color:var(--sys)}
+.ogrp h4{font-size:14px;margin-bottom:3px}
+.ogrp .cap{font-size:12.5px;color:var(--ink2);margin-bottom:10px}
+.ogrp li .nm2{font-size:15px}
+.ogrp li .rl{grid-column:2;font-size:13px;color:var(--ink2);line-height:1.45}
+.ogrp li{list-style:none;padding:7px 0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:baseline}
+.ogrp ul{margin:0;padding:0}
+.ogrp .rl{color:var(--ink2);font-size:12.5px}
+
+/* figures */
+.fig{margin:24px 0;overflow-x:auto}
+.fig svg{width:100%;min-width:700px;height:auto;display:block}
+.fig text{dominant-baseline:central;font-family:"IBM Plex Sans","IBM Plex Sans TC",sans-serif}
+.fig .t{font-size:18px;fill:var(--ink);font-weight:600}
+.fig .s{font-size:14.5px;fill:var(--ink2)}
+.fig .k{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600}
+.fig .lbl{font-size:14.5px;fill:var(--ink3);font-family:"IBM Plex Mono",monospace}
+.fig .cap{font-size:14.5px;fill:var(--ink2)}
+.fig rect{fill:#fff;stroke:var(--line)}
+.fig rect.ADM{fill:var(--admbg);stroke:var(--admln)} .fig rect.RD{fill:var(--rdbg);stroke:var(--rdln)}
+.fig rect.HW{fill:var(--hwbg);stroke:var(--hwln)} .fig rect.SYS{fill:var(--sysbg);stroke:var(--sysln)}
+.fig rect.dk{fill:var(--ink);stroke:var(--ink)}
+.fig .ondk{fill:#F4F6F4} .fig .ondk2{fill:#B8BFBB;font-family:"IBM Plex Mono",monospace;font-size:15px}
+.fig circle.dot{stroke:#fff;stroke-width:2}
+.fig .cADM{fill:var(--adm)} .fig .cRD{fill:var(--rd)} .fig .cHW{fill:var(--hw)} .fig .cSYS{fill:var(--sys)}
+.fig line,.fig path.ar{stroke:var(--ink3);fill:none;stroke-width:1.3}
+
+/* stage */
+/* gate cards */
+.gate{border:1px solid var(--line);border-left:4px solid var(--line);margin-top:18px;background:#fff;scroll-margin-top:74px}
+.gate.gRD{border-left-color:var(--rd)} .gate.gMP{border-left-color:var(--hw)} .gate.gLOOP{border-left-color:var(--adm)}
+.ghd{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;padding:15px 20px;border-bottom:1px solid var(--line)}
+.ghd .gc{font-family:"IBM Plex Mono",monospace;font-size:16px;font-weight:600;color:var(--ink2)}
+.ghd h3{font-size:20px}
+.ghd em{font-style:normal;color:var(--ink2);font-size:14.5px}
+.ghd .gpass{margin-left:auto;font-size:13.5px;color:var(--rd);max-width:42ch;text-align:right}
+.gbody{display:grid;grid-template-columns:1fr 1.35fr 1fr}
+.gcol{padding:16px 20px;border-right:1px solid var(--line2)}
+.gcol:last-child{border-right:0}
+
+.gcol h5{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.06em;color:var(--ink3);margin:0 0 12px;font-weight:500}
+.gact,.glist{list-style:none;margin:0;padding:0}
+.gact li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline;padding:6px 0;font-size:15px;line-height:1.55}
+.glist li{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline;padding:6px 0;font-size:15px;color:var(--ink2)}
+.glist li i{font-style:normal;display:block;font-size:12px;color:var(--ink3);font-family:"IBM Plex Mono",monospace}
+.plain{margin:0;font-size:15px;color:var(--ink2)}
+.gto{margin-top:12px;padding-top:11px;border-top:1px solid var(--line2);font-size:13.5px;color:var(--ink3)}
+.gwhy{margin:0;padding:13px 20px;border-top:1px solid var(--line);font-size:14px;color:var(--ink2)}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-weight:500;font-size:12.5px;color:var(--ink3);padding:0 15px 6px 0;border-bottom:1px solid var(--line);font-family:"IBM Plex Mono",monospace}
+td{padding:11px 15px 11px 0;border-bottom:1px solid var(--line2);font-size:15.5px;vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr:nth-child(even){background:#FAFBFA}
+.jt{font-size:11px;border:1px solid var(--rdln);color:var(--rd);padding:0 5px;border-radius:2px}
+.tt{font-size:11px;border:1px solid var(--line);color:var(--ink3);padding:0 5px;border-radius:2px;margin-left:5px}
+
+/* rules */
+.rule{display:grid;grid-template-columns:44px 1fr;gap:18px;padding:20px 0;border-bottom:1px solid var(--line2)}
+.rule:last-child{border-bottom:0}
+.rule .n{font-family:"IBM Plex Mono",monospace;color:var(--rd);font-size:13px}
+.rule h3{font-size:17px;margin-bottom:5px}
+.rule p{margin:0;color:var(--ink2);font-size:15px;max-width:58ch}
+
+/* lanes */
+.lanettl{font-size:17px;font-weight:600;margin:32px 0 12px;padding-left:12px;border-left:4px solid var(--line)}
+.lanettl.tRD{border-color:var(--rd)} .lanettl.tMP{border-color:var(--hw)} .lanettl.tLO{border-color:var(--adm)}
+.lr.hd a{color:var(--adm);text-decoration:none;border-bottom:1px solid transparent}
+.lr.hd a:hover{border-bottom-color:var(--adm)}
+.gl{color:var(--adm);text-decoration:none;border-bottom:1px solid transparent}
+.gl:hover{border-bottom-color:var(--adm)}
+.loops{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.loop{border:1px solid var(--line);border-left:4px solid var(--adm);padding:14px 18px;scroll-margin-top:74px}
+.loop h4{font-size:16px;margin-bottom:10px}
+.loop h4 a{color:inherit;text-decoration:none;border-bottom:2px solid var(--admln)}
+.loop h4 span{display:block;font-weight:400;font-size:13.5px;color:var(--ink2);margin-top:2px}
+.loop ul{margin:0;padding:0;list-style:none}
+.loop li{font-size:15px;padding:5px 0;border-bottom:1px solid var(--line2);
+ display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline}
+.loop li:last-child{border-bottom:0}
+@media(max-width:760px){.loops{grid-template-columns:1fr}}
+
+.scroll{overflow-x:auto;margin:0 -28px;padding:0 28px 4px}
+.lanes{min-width:960px;border:1px solid var(--line)}
+.lband{display:grid;border-bottom:1px solid var(--line)}
+.lband>div{padding:8px 12px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+ letter-spacing:.06em;color:#fff;text-align:center}
+.lband .bRD{background:var(--rd)} .lband .bMP{background:var(--hw)}
+.lband>div:first-child{background:none}
+.lr{display:grid;border-bottom:1px solid var(--line2)}
+.lr:last-child{border-bottom:0}
+.lr>div{padding:9px 10px}
+.lr.hd{background:#FAFBFA;border-bottom:1px solid var(--line)}
+.lr.hd>div{font-size:12px;color:var(--ink2);padding:8px 10px}
+.lr.hd b{font-family:"IBM Plex Mono",monospace;color:var(--ink);font-weight:600}
+.lr .u{font-size:13.5px;font-weight:600;padding-left:13px}
+.lr.gADM .u{color:var(--adm);box-shadow:inset 4px 0 0 var(--adm)}
+.lr.gRD .u{color:var(--rd);box-shadow:inset 4px 0 0 var(--rd)}
+.lr.gHW .u{color:var(--hw);box-shadow:inset 4px 0 0 var(--hw)}
+.lr.gSYS .u{color:var(--sys);box-shadow:inset 4px 0 0 var(--sys)}
+.lc{font-size:12.5px;line-height:1.45;color:var(--ink2)}
+.lc .lt{display:block;margin-bottom:7px}
+.lc .lt:last-child{margin-bottom:0}
+.lc .chip{display:block;margin-bottom:3px}
+.lr .seam{box-shadow:inset 2px 0 0 var(--ink)}
+/* rows */
+.rows{border-top:1px solid var(--line);margin-top:18px}
+.r{display:grid;gap:16px;padding:13px 0;border-bottom:1px solid var(--line2);font-size:14px;align-items:baseline}
+.r:last-child{border-bottom:0}
+.rows .r:nth-child(even){background:#FAFBFA}
+.r b{font-weight:600;font-size:15px}.r .m{color:var(--ink2);font-size:13px}
+.c4{grid-template-columns:210px 1fr 1fr}
+.c5{grid-template-columns:140px 84px 1fr 1fr 1fr}
+.c3{grid-template-columns:120px 1fr 1fr}
+.c2{grid-template-columns:96px 1fr}
+.r.tick{grid-template-columns:22px 96px 1fr}
+.r.tick::before{content:'';display:inline-block;width:13px;height:13px;border:1.5px solid var(--ink3);border-radius:2px}
+.cd{grid-template-columns:1fr 128px 84px 1.5fr}
+.ch{grid-template-columns:58px 108px 1fr 116px}
+.ch.hot{background:#FDF7EE;margin:0 -12px;padding:13px 12px}
+
+/* numbered paths */
+.paths{display:grid;grid-template-columns:repeat(auto-fit,minmax(212px,1fr));gap:16px;margin-top:24px}
+.path{border:1px solid var(--line);border-top:3px solid var(--hwln);padding:14px 15px}
+.path.bad{border-top-color:#D9A05B}
+.path h4{font-size:14.5px;margin-bottom:4px}
+.path p{margin:0;font-size:13px;color:var(--ink2)}
+
+
+/* systems */
+.scat li.om span{color:var(--ink3)}
+.scat li.om{opacity:.72}
+.omb{display:block;font-style:normal;font-family:"IBM Plex Mono",monospace;
+ font-size:11px;color:var(--rd);margin-top:2px}
+
+.sysrow{display:block;margin-top:22px}
+.sblk{margin-bottom:22px;border:1px solid var(--line)}
+.sbar{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;padding:11px 16px;background:var(--ink);color:#fff}
+.sbar .sname{font-size:16px;font-weight:600}
+.sbar .now{font-size:11.5px;color:#E8C395}
+.sbar .scount{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:#A9B0AC}
+.sblk.tbd .sbar{background:var(--rd)}
+.scats{display:block}
+.scat{display:grid;grid-template-columns:104px 1fr;gap:18px;padding:12px 16px;border-top:1px solid var(--line2)}
+.scat:first-child{border-top:0}
+.scat h4{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.05em;
+ color:var(--ink3);font-weight:500;padding-top:5px}
+.scat ul{margin:0;padding:0;list-style:none;display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(248px,1fr));gap:0 22px}
+.scat li{font-size:14.5px;padding:5px 0;display:grid;grid-template-columns:1fr auto;
+ gap:8px;align-items:baseline;border-bottom:1px solid var(--line2)}
+@media(max-width:700px){.scat{grid-template-columns:1fr;gap:6px}}
+.tbl{width:100%;border-collapse:collapse;margin-top:18px}
+.tbl th{text-align:left;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink3);
+ font-weight:500;padding:0 14px 8px 0;border-bottom:2px solid var(--line)}
+.tbl td{padding:10px 14px 10px 0;border-bottom:1px solid var(--line2);font-size:15px;vertical-align:top}
+.tbl tbody tr:nth-child(even){background:#FAFBFA}
+.tbl .sysrowhd td{background:var(--ink)!important;color:#fff;font-weight:600;font-size:14.5px;padding:8px 14px}
+.tbl .sysrowhd .now{color:#E8C395;margin-left:6px;font-size:11.5px}
+.tbl .sm{color:var(--ink2);font-size:13.5px}
+.tbl .mono{font-family:"IBM Plex Mono",monospace}
+ol.mini{margin:16px 0 0;padding:0;counter-reset:m;list-style:none}
+ol.mini li{counter-increment:m;font-size:15px;padding:7px 0 7px 30px;position:relative;
+ border-bottom:1px solid var(--line2);display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:baseline}
+ol.mini li::before{content:counter(m);position:absolute;left:0;top:7px;
+ font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink3)}
+ol.mini li:last-child{border-bottom:0}
+
+.now{font-size:11px;color:var(--rd);margin-left:4px}
+
+
+.r.hdr{border-bottom:2px solid var(--line);font-size:12.5px;color:var(--ink3);
+ font-family:"IBM Plex Mono",monospace;padding-bottom:9px}
+.r.hdr b{color:var(--ink3);font-weight:500}
+.tl{gap:20px}
+.tl .d{border-bottom-width:3px}
+
+.zone{margin-top:38px;padding-top:20px;border-top:1px solid var(--line)}
+.zone>h3{font-size:18px;margin-bottom:6px}
+.zone .say{margin-top:8px}
+.zone .fig{margin:20px 0 14px}
+.zone .rows{margin-top:14px}
+/* timeline */
+
+.tl .d{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--rd);padding-bottom:7px;border-bottom:2px solid var(--rdln);margin-bottom:8px}
+.tl p{margin:0;font-size:13.5px;color:var(--ink2)}
+
+
+.duties{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:24px 34px}
+.duty h4{font-size:16px;margin-bottom:8px;padding-bottom:7px;border-bottom:2px solid var(--line)}
+.ticks{list-style:none;margin:0;padding:0}
+.ticks li{font-size:15px;color:var(--ink);padding:6px 0 6px 28px;position:relative;line-height:1.55}
+.ticks li::before{content:'';position:absolute;left:0;top:11px;width:14px;height:14px;
+ border:1.5px solid var(--ink3);border-radius:2px}
+.ticks .dm{display:block;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink3);margin-top:1px}
+.grp{margin-bottom:26px}
+.grp h4{font-size:15.5px;margin-bottom:9px;padding-bottom:7px;border-bottom:2px solid var(--line)}
+/* roster */
+.rgrp{margin-top:40px}
+.rgh{font-size:18px;padding-left:14px;border-left:5px solid var(--line);margin-bottom:18px}
+.rgh.aRD{border-color:var(--rd)} .rgh.aHW{border-color:var(--hw)} .rgh.aSYS{border-color:var(--sys)}
+.rcards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.card{border:1px solid var(--line);padding:18px 20px 20px;background:#fff}
+.chd{display:flex;gap:11px;align-items:baseline;flex-wrap:wrap;padding-bottom:12px;
+ margin-bottom:14px;border-bottom:2px solid var(--line)}
+.chd b{font-size:18px}
+.chd em{font-style:normal;font-size:13.5px;color:var(--ink2)}
+.dsec{margin-bottom:16px}
+.dsec:last-child{margin-bottom:0}
+.dsec h4{font-size:14.5px;margin-bottom:6px}
+.dsec ul{margin:0;padding:0;list-style:none}
+.dsec li{font-size:15px;color:var(--ink);padding:5px 0 5px 25px;position:relative;line-height:1.5}
+.dsec li::before{content:'';position:absolute;left:0;top:10px;width:13px;height:13px;
+ border:1.5px solid var(--ink3);border-radius:2px}
+.dsec .lm{display:block;font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink3);margin-top:1px}
+@media(max-width:820px){.rcards{grid-template-columns:1fr}}
+.rk{padding:19px 0;border-bottom:1px solid var(--line2)}
+.rk:last-child{border-bottom:0}
+.rk h3{font-size:16px;margin-bottom:4px}
+.rk p{margin:0;color:var(--ink2);font-size:15px;max-width:58ch}
+.rk .fx{color:var(--hw);margin-top:5px}
+footer{padding:40px 0 66px;color:var(--ink3);font-size:12.5px;border-top:1px solid var(--line2)}
+
+@media(max-width:900px){.gbody{grid-template-columns:1fr}.gcol{border-right:0;border-bottom:1px solid var(--line2)}.ghd .gpass{margin-left:0;text-align:left}}
+@media(max-width:820px){
+ h1{font-size:27px}
+ .r,.tl,.paths,.org{grid-template-columns:1fr!important}
+ .inflow ul{columns:1}
+ .rule{grid-template-columns:1fr;gap:4px}
+ table,thead,tbody,tr,td,th{display:block}
+ thead{display:none}
+ td{width:auto!important;padding:2px 0;border:0}
+ tr{padding:11px 0;border-bottom:1px solid var(--line2);display:block}
+}
+/* editor */
+.edopen{margin-left:14px;font-size:12.5px;padding:3px 11px;border:1px solid var(--line);color:var(--ink2);flex-shrink:0}
+.edopen:hover{border-color:var(--ink);color:var(--ink)}
+.pick{position:fixed;inset:0;z-index:200;background:rgba(255,255,255,.97);display:flex;align-items:center;justify-content:center}
+.pickbox{border:1px solid var(--line);padding:28px 32px;max-width:460px}
+.pickbox h3{font-size:18px;margin-bottom:8px}
+.pickbox p{color:var(--ink2);font-size:15px;margin:0 0 16px}
+#editor{position:fixed;inset:0;z-index:150;background:#fff;display:flex;flex-direction:column}
+.edbar{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.edbar b{font-size:16px}
+.edhint{font-size:13px;color:var(--ink3);margin-right:auto}
+.edbtn{font-size:13.5px;padding:6px 14px;border:1px solid var(--line);color:var(--ink2)}
+.edbtn:hover{border-color:var(--ink);color:var(--ink)}
+.edbtn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
+.edmain{flex:1;display:grid;grid-template-columns:210px 1fr;min-height:0}
+.edtabs{border-right:1px solid var(--line);overflow-y:auto;padding:12px 0}
+.edtabs button{display:block;width:100%;text-align:left;padding:8px 18px;font-size:14px;color:var(--ink2)}
+.edtabs button:hover{background:var(--bg2);color:var(--ink)}
+.edtabs button.on{color:var(--ink);font-weight:600;box-shadow:inset 3px 0 0 var(--ink)}
+.edtabs .grouplbl{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink3);
+ padding:14px 18px 6px;letter-spacing:.05em}
+.edbody{overflow-y:auto;padding:20px 24px 80px}
+.edbody h4{font-size:16px;margin-bottom:4px}
+.edbody .note{font-size:13.5px;color:var(--ink2);margin:0 0 18px}
+.item{border:1px solid var(--line);padding:14px 16px;margin-bottom:14px}
+.item .ihd{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.item .ihd b{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink3)}
+.item .del{margin-left:auto;font-size:12px;color:var(--rd);border:1px solid var(--rdln);padding:1px 8px}
+.fld{display:grid;grid-template-columns:132px 1fr;gap:12px;align-items:start;margin-bottom:8px}
+.fld label{font-size:12.5px;color:var(--ink3);padding-top:7px;font-family:"IBM Plex Mono",monospace}
+.fld input,.fld textarea{font:inherit;font-size:14.5px;width:100%;padding:6px 9px;
+ border:1px solid var(--line);background:#fff;color:var(--ink);font-family:inherit}
+.fld textarea{min-height:62px;resize:vertical;line-height:1.5}
+.fld input:focus,.fld textarea:focus{border-color:var(--adm);outline:none}
+.sub{border-left:3px solid var(--line);padding-left:14px;margin:10px 0 14px}
+.sub .sh2{font-size:13px;color:var(--ink2);margin-bottom:6px;font-weight:600}
+.addbtn{font-size:13px;padding:5px 12px;border:1px dashed var(--line);color:var(--ink2)}
+.addbtn:hover{border-color:var(--ink);color:var(--ink)}
+@media(max-width:760px){.edmain{grid-template-columns:1fr}.edtabs{border-right:0;border-bottom:1px solid var(--line);max-height:150px}}
+@media print{#editor,.edopen,.pick{display:none!important}
+nav{display:none}section{page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<nav><div class="w">
+ <b>ANVIL TW</b>
+ <a href="#overview" data-zh="整條線" data-en="The line">整條線</a>
+ <a href="#rules" data-zh="規則" data-en="Rules">規則</a>
+ <a href="#lanes" data-zh="流程全表" data-en="Flow">流程全表</a>
+ <a href="#flow" data-zh="關卡細節" data-en="Gate detail">關卡細節</a>
+ <a href="#buy" data-zh="採購" data-en="Purchasing">採購</a>
+ <a href="#gates" data-zh="品質" data-en="Quality">品質</a>
+ <a href="#sys" data-zh="系統" data-en="Systems">系統</a>
+ <a href="#mon" data-zh="月結" data-en="Close">月結</a>
+ <a href="#roster" data-zh="名冊" data-en="Roster">名冊</a>
+ <a href="#open" data-zh="待決策" data-en="Open">待決策</a>
+ <button id="edopen" class="edopen" title="編輯內容">編輯</button>
+  <span class="lang"><button id="bzh" aria-pressed="true">中</button><button id="ben" aria-pressed="false">EN</button></span>
+</div></nav>
+<div id="pick" hidden class="pick">
+ <div class="pickbox">
+  <h3>找不到 data.json</h3>
+  <p>從網址開啟時會自動載入。如果是用檔案直接打開，請手動選一次 <code>data.json</code>。</p>
+  <input type="file" id="pickfile" accept=".json">
+ </div>
+</div>
+
+<div id="editor" hidden>
+ <div class="edbar">
+  <b>編輯內容</b>
+  <span class="edhint">改完按「下載 data.json」，再把檔案拖回 GitHub 取代舊的</span>
+  <button id="eddl" class="edbtn pri">下載 data.json</button>
+  <button id="edclose" class="edbtn">關閉</button>
+ </div>
+ <div class="edmain">
+  <nav class="edtabs" id="edtabs"></nav>
+  <div class="edbody" id="edbody"></div>
+ </div>
+</div>
+
+<div class="w">
+
+<header>
+ <h1><span class="l1" data-zh="從 RD 到量產" data-en="From RD to production">從 RD 到量產</span><span class="l2" data-zh="十一關，一條線" data-en="Eleven gates, one line">十一關，一條線</span></h1>
+ <p class="lede" data-zh="誰做什麼、交什麼表、用什麼系統、下一棒是誰。找到自己的顏色和代號，就知道自己顧哪一段。" data-en="Who does what, which form they hand over, which system holds it, who picks it up next. Find your colour and your code, and you know your leg of the line.">誰做什麼、交什麼表、用什麼系統、下一棒是誰。找到自己的顏色和代號，就知道自己顧哪一段。</p>
+</header>
+
+<section id="overview">
+ <div class="shead"><span class="num">01</span><span class="nm" data-zh="整條線" data-en="The line">整條線</span></div>
+ <h2 data-zh="這條線上有誰，這條線怎麼跑" data-en="Who is on this line, and how it runs">這條線上有誰，這條線怎麼跑</h2>
+ <p class="say" data-zh="行政營運管訂單、金流、料的進出；RD 出規格、圖與標準；產線組把東西做出來並且把關。每個人有一個代號，交辦、交接、查紀錄都用代號。" data-en="Admin and Ops handle orders, money and goods in and out. RD produces the specs, drawings and standards. The production group builds the product and guards its quality. Everyone has a code, and work is assigned, handed over and traced by that code.">行政營運管訂單、金流、料的進出；RD 出規格、圖與標準；產線組把東西做出來並且把關。每個人有一個代號，交辦、交接、查紀錄都用代號。</p>
+ <div class="org" id="org"></div>
+ <h3 class="sub" data-zh="整條線" data-en="The whole line">整條線</h3>
+ <div class="fig" id="figFlow"></div>
+ <p class="say" data-zh="第一段 RD 研發把一個想法做成可以開賣的商品；第二段量產把一張訂單做成交到客戶手上的機器。另外兩件事跟訂單無關，自己在轉：常備料每天補、帳每月結。" data-en="The first phase, RD, turns an idea into something you can sell. The second, production, turns an order into a machine in the customer's hands. Two more things run independently of orders: stock is replenished daily and the books close monthly.">第一段 RD 研發把一個想法做成可以開賣的商品；第二段量產把一張訂單做成交到客戶手上的機器。另外兩件事跟訂單無關，自己在轉：常備料每天補、帳每月結。</p>
+ <h3 class="sub" data-zh="誰在哪一關有份" data-en="Who is involved at which gate">誰在哪一關有份</h3>
+ <div class="fig" id="figMatrix"></div>
+</section>
+<section id="rules">
+ <div class="shead"><span class="num">02</span><span class="nm" data-zh="四條規則" data-en="Four rules">四條規則</span></div>
+ <h2 data-zh="四條規則，其餘不用背" data-en="Four rules; nothing else needs memorising">四條規則，其餘不用背</h2>
+ <div style="margin-top:20px" id="rulelist"></div>
+ <h3 class="sub" data-zh="第三條長什麼樣" data-en="What rule three looks like">第三條長什麼樣</h3>
+ <div class="fig" id="figChain"></div>
+</section>
+<section id="lanes">
+ <div class="shead"><span class="num">03</span><span class="nm" data-zh="流程全表" data-en="The whole flow">流程全表</span></div>
+ <h2 data-zh="哪一段誰在做什麼" data-en="Who does what, in which phase">哪一段誰在做什麼</h2>
+ 
+ <div id="lanetables"></div>
+ <p class="say" data-zh="橫著看是一個單位在整條線上做什麼，直著看是一關有誰參與。空格代表那一關這個單位沒有動作。" data-en="Read across for what one unit does along the line; read down for who is involved at one gate. A blank means no action there.">橫著看是一個單位在整條線上做什麼，直著看是一關有誰參與。空格代表那一關這個單位沒有動作。</p>
+  <h3 class="sub" data-zh="跨單位交接：誰把什麼交給誰" data-en="Handoffs: who passes what to whom">跨單位交接：誰把什麼交給誰</h3>
+ <p class="say" data-zh="每一列是一次交接：上一棒做完，把某個東西交給下一棒，下一棒才能開工。底色標出來的三筆最容易掉球。" data-en="Each row is one handoff: someone finishes, passes something on, and only then can the next person start. The three shaded rows are where the ball drops most often.">每一列是一次交接：上一棒做完，把某個東西交給下一棒，下一棒才能開工。底色標出來的三筆最容易掉球。</p>
+ <div class="rows" id="hand"></div>
+</section>
+<section id="flow">
+ <div class="shead"><span class="num">04</span><span class="nm" data-zh="關卡細節" data-en="Gate detail">關卡細節</span></div>
+ <h2 data-zh="每一關的細節" data-en="What happens at each gate">每一關的細節</h2>
+ <div class="fig" id="figPattern"></div>
+ <p class="say" data-zh="標了「判定」的人負責認定這關過不過。卡片最下面那句話，是這一關最容易掉球的地方。R0 到 R3 由 RD-1 一個人完成，所以只寫交出什麼；R4 之後多人接力，才逐項寫清楚。" data-en="Whoever is marked as judging decides whether the gate is cleared. The line at the foot of each card is where that gate most often goes wrong. R0 to R3 are done by RD-1 alone, so only the handover is listed; from R4 on the work passes between people, so it is written out in full.">標了「判定」的人負責認定這關過不過。卡片最下面那句話，是這一關最容易掉球的地方。R0 到 R3 由 RD-1 一個人完成，所以只寫交出什麼；R4 之後多人接力，才逐項寫清楚。</p>
+ <div id="gatecards"></div>
+ <h3 class="sub" data-zh="兩個迴圈" data-en="The two loops">兩個迴圈</h3>
+ <div id="loopcards"></div>
+</section>
+<section id="buy">
+ <div class="shead"><span class="num">05</span><span class="nm" data-zh="採購與庫存" data-en="Purchasing and stock">採購與庫存</span></div>
+ <h2 data-zh="四個來源，一道檢驗關" data-en="Four sources, one inspection gate">四個來源，一道檢驗關</h2>
+ 
+ <div class="fig" id="figTracks"></div>
+ <p class="say" data-zh="差別在核准路徑、入哪個庫位、成本歸哪裡。不管哪一軌都不能繞過系統——RD 買一顆測試料也要走正式採購單，否則料況、成本、供應商紀錄都會斷。" data-en="They differ in approval path, storage location and where the cost lands. None of them bypasses the system: even a single RD test part goes through a formal purchase order, otherwise material status, cost and supplier history all break.">差別在核准路徑、入哪個庫位、成本歸哪裡。不管哪一軌都不能繞過系統——RD 買一顆測試料也要走正式採購單。</p>
+ <div class="rows" id="tracks"></div>
+ <h3 class="sub" data-zh="料號終身不變，變的是狀態" data-en="A part number lasts for life; its status changes">料號終身不變，變的是狀態</h3>
+ <div class="fig" id="figStatus"></div>
+ <h3 class="sub" data-zh="委外 SUBASSY" data-en="Subcontracted sub-assemblies">委外 SUBASSY</h3>
+ <p class="say" data-zh="技轉出去的件由 RD-1 與 HW-1 處理，回件跟外購料一樣要走來料檢驗。" data-en="Transferred parts are handled by RD-1 and HW-1, and returns go through incoming inspection just like bought parts.">技轉出去的件由 RD-1 與 HW-1 處理，回件跟外購料一樣要走來料檢驗。</p>
+ <div class="rows" id="sub"></div>
+</section>
+<section id="gates">
+ <div class="shead"><span class="num">06</span><span class="nm" data-zh="品質把關" data-en="Quality">品質把關</span></div>
+ <h2 data-zh="做的人不決定自己的東西過不過關" data-en="Whoever builds it does not decide whether it passes">做的人不決定自己的東西過不過關</h2>
+ <div class="fig" id="figGates"></div>
+ <p class="say" data-zh="執行可以是產線，認定的權責在守門的人。四道關，每一道都簽名留存。" data-en="The line may do the work; the call belongs to the gatekeeper. Four gates, each signed and filed.">執行可以是產線，認定的權責在守門的人。四道關，每一道都簽名留存。</p>
+ 
+ <h3 class="sub" data-zh="檢驗分三級，等級是料號的屬性" data-en="Three inspection levels, carried on the part number">檢驗分三級，等級是料號的屬性</h3>
+ <p class="say" data-zh="R1 建料號時就定，R4 量產轉移時複核。名單由 HW-3 訂，執行可以分散。" data-en="Set when the part is created at R1 and reviewed at R4. HW-3 owns the lists; execution can spread out.">R1 建料號時就定，R4 量產轉移時複核。名單由 HW-3 訂，執行可以分散。</p>
+ <div class="rows" id="levels"></div>
+ <p class="say" style="margin-top:18px" data-zh="等級可升降：連續數批合格降一級，出現不良立刻升一級，換供應商或換料號版本一律回到全檢。降級要連續幾批，待定。" data-en="Levels move: several clean lots drops one level, a defect raises it at once, and a new supplier or revision returns to full inspection. How many lots is undecided.">等級可升降：連續數批合格降一級，出現不良立刻升一級，換供應商或換料號版本一律回到全檢。降級要連續幾批，待定。</p>
+ <h3 class="sub" data-zh="來料不合格，四條路" data-en="Four paths when incoming material fails">來料不合格，四條路</h3>
+ <div class="fig" id="figPaths"></div>
+</section>
+<section id="sys">
+ <div class="shead"><span class="num">07</span><span class="nm" data-zh="系統與表格" data-en="Systems and forms">系統與表格</span></div>
+ <h2 data-zh="要改資料，回它所在的那個系統改" data-en="To change data, go back to the system that owns it">要改資料，回它所在的那個系統改</h2>
+ 
+ <div class="fig" id="figSys"></div>
+ <p class="say" data-zh="EverCurrent 不存數字，只存規格、判斷與紀錄，並負責串接與提醒。進銷存尚未選定，Odoo 為暫定方案，選型只影響那一欄。" data-en="EverCurrent holds no figures — only specs, judgements and records — and does the connecting and reminding. The inventory system is undecided; Odoo is provisional and only that column depends on the choice.">EverCurrent 不存數字，只存規格、判斷與紀錄，並負責串接與提醒。進銷存尚未選定，Odoo 為暫定方案。</p>
+ <h3 class="sub" data-zh="資料落在哪裡" data-en="Where the data lands">資料落在哪裡</h3>
+ <p class="say" data-zh="下面大多不是要人填的表，而是做完動作系統自然留下的紀錄——下了採購單就有採購單，發了料就有發料單。真正要動手寫的是規範、SOP、checklist 這幾類，每個產品做一次，做完就放著用。" data-en="Most of what follows is not a form someone fills in; it is the record a system leaves once an action happens. What actually has to be written are the specs, SOPs and check lists, done once per product and then simply used.">下面大多不是要人填的表，而是做完動作系統自然留下的紀錄。真正要動手寫的是規範、SOP、checklist，每個產品做一次。</p>
+ <div class="sysrow" id="sysrow"></div>
+</section>
+<section id="mon">
+ <div class="shead"><span class="num">08</span><span class="nm" data-zh="月結與週報" data-en="Close and reporting">月結與週報</span></div>
+ <h2 data-zh="月結：誰在什麼時候交什麼" data-en="The close: who files what, and when">月結：誰在什麼時候交什麼</h2>
+ <p class="say" data-zh="月結有外部期限，所以時程寫死，到期各單位硬性交表，不靠默契。" data-en="The close has an external deadline, so the timetable is fixed and each unit files on time. It is a rule, not an understanding.">月結有外部期限，所以時程寫死，到期各單位硬性交表，不靠默契。</p>
+
+ <div class="zone">
+  <h3 data-zh="月結時程" data-en="The timetable">月結時程</h3>
+  <div class="fig" id="figTl"></div>
+ </div>
+
+ <div class="zone">
+  <h3 data-zh="三張表怎麼算出來" data-en="How the three reports fit together">三張表怎麼算出來</h3>
+  <p class="say" data-zh="表①是料號別，表③是成品別。要從料號跳到成品得靠 BOM 換算，所以表②夾在中間。表③是算出來的，不是收集來的。" data-en="Report 1 is by part and report 3 is by product. Getting from one to the other needs the BOM, which is why report 2 sits in between. Report 3 is calculated, not collected.">表①是料號別，表③是成品別。要從料號跳到成品得靠 BOM 換算，所以表②夾在中間。表③是算出來的，不是收集來的。</p>
+  <div class="fig" id="figThree"></div>
+  <div class="rows" id="three"></div>
+ </div>
+
+ <div class="zone">
+  <h3 data-zh="每月還要維護的事" data-en="Other monthly upkeep">每月還要維護的事</h3>
+  <div class="rows" id="other"></div>
+ </div>
+
+ <div class="zone">
+  <h3 data-zh="每週回報" data-en="The weekly report">每週回報</h3>
+  <div class="rows" id="weekly"></div>
+ </div>
+
+ <p class="say" data-zh="成本以工單歸集，不以月份鎖版。每張工單記下開單當時的 BOM 版本，設變隨時可做，數字仍然對得起來。" data-en="Cost is gathered per work order rather than by freezing a monthly revision. Each work order records the revision in force when it opened, so design changes can happen at any time and the numbers still reconcile.">成本以工單歸集，不以月份鎖版。每張工單記下開單當時的 BOM 版本，設變隨時可做，數字仍然對得起來。</p>
+</section>
+<section id="roster">
+ <div class="shead"><span class="num">09</span><span class="nm" data-zh="人員名冊" data-en="Roster">人員名冊</span></div>
+ <h2 data-zh="每個代號名下都是可打勾的待辦" data-en="Every code owns a list you can tick off">每個代號名下都是可打勾的待辦</h2>
+ <p class="say" data-zh="上半是職掌，下半是這個人在整條線上的流程工作。對應真人後即可直接交辦。行政營運四個角色另有文件。" data-en="Duties first, then that person's tasks across the line. Map each code to a person and work can be assigned directly. The four administrative roles are documented separately.">上半是職掌，下半是這個人在整條線上的流程工作。對應真人後即可直接交辦。行政營運四個角色另有文件。</p>
+ <div id="rostercards" style="margin-top:12px"></div>
+</section>
+<section id="open">
+ <div class="shead"><span class="num">10</span><span class="nm" data-zh="待決策與風險" data-en="Open decisions and risks">待決策與風險</span></div>
+ <h2 data-zh="還沒定的十一題" data-en="Eleven still undecided">還沒定的十一題</h2>
+ <div class="rows" id="opens"></div>
+ <h3 class="sub" data-zh="七項已知風險" data-en="Seven known risks">七項已知風險</h3>
+ <p class="say" data-zh="寫出來的風險比藏起來的安全。有處置的寫處置，沒有的就承認是選擇。" data-en="A risk written down is safer than one left implicit. Where there is a countermeasure it is stated; where there isn't, it is named as a deliberate choice.">寫出來的風險比藏起來的安全。有處置的寫處置，沒有的就承認是選擇。</p>
+ <div style="margin-top:14px" id="risks"></div>
+</section>
+<footer><span data-zh="代號版，對應真人後交辦。改流程只需改本檔案內的資料段，所有圖表與清單自動更新。" data-en="Code version; assign once mapped to people. Edit the data block inside this file and every diagram and list updates itself.">代號版，對應真人後交辦。改流程只需改本檔案內的資料段，所有圖表與清單自動更新。</span></footer>
+</div>
+<script>
+let D,NOTE,GATE,EXTRA;
+const CODE={"業務":"SLS","採購":"PUR","物運":"LOG","財務":"FIN"};
+const EXT={CUST:["客戶","Customer"],SUPP:["供應商","Supplier"]};
+const CD=id=>EXT[id]?G(EXT[id][0],EXT[id][1]):(L==="zh"?id:(CODE[id]||id));
+const GATEN={"來料":["來料檢驗","Incoming"],"第 1 關":["第 1 關","Gate 1"],
+             "第 2 關":["第 2 關","Gate 2"],"第 3 關":["第 3 關","Gate 3"]};
+const GN=g=>GATEN[g]?G(GATEN[g][0],GATEN[g][1]):g;
+let L="zh";
+const G=(z,e)=>L==="zh"?z:e;
+const R=i=>D.roles.find(x=>x.id===i)||{};
+const GR=i=>(R(i).grp||"ADM");
+const CH=i=>`<span class="chip ${GR(i)}">${CD(i)}</span>`;
+const dn=i=>{const d=D.docs.find(x=>x.id===i);return d?G(d.zh,d.en).replace(/（[^）]*）|\([^)]*\)/g,"").trim():i};
+const dsy=i=>{const d=D.docs.find(x=>x.id===i);if(!d)return"";const s=D.sys.find(x=>x.id===d.s);return s?G(s.zh,s.en):""};
+const FR={案:["每案","per project"],改:["每次改","per change"],件:["每件","per part"],批:["每批","per lot"],台:["每台","per unit"],筆:["每筆","per item"],單:["每單","per order"],日:["每日","daily"],週:["每週","weekly"],月:["每月","monthly"],滾:["滾動","rolling"]};
+const fq=f=>(FR[f]||[f,f])[L==="zh"?0:1];
+const H=(i,h)=>{const e=document.getElementById(i);if(e)e.innerHTML=h};
+
+/* ---------- SVG helpers ---------- */
+const BX=(x,y,w,h,c)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6"${c?` class="${c}"`:""}/>`;
+const TX=(x,y,s,c)=>`<text x="${x}" y="${y}" class="${c||"s"}">${s}</text>`;
+const TC=(x,y,s,c)=>`<text x="${x}" y="${y}" text-anchor="middle" class="${c||"s"}">${s}</text>`;
+const AR=(a,b,c,d)=>`<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" marker-end="url(#ar)"/>`;
+const MK=`<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path class="ar" d="M2 1L8 5L2 9" stroke="#9AA09C" stroke-width="1.7" fill="none" stroke-linecap="round"/></marker></defs>`;
+const SVG=(h,b)=>`<svg viewBox="0 0 1000 ${h}" xmlns="http://www.w3.org/2000/svg" role="img">${MK}${b}</svg>`;
+const codes=(id,n)=>{const l=[...new Set(D.tasks.filter(x=>x.s===id).map(x=>x.a))].slice(0,n||3);
+  return l.map((c,i)=>`<tspan class="c${GR(c)}">${CD(c)}</tspan>`).join('<tspan fill="#C6CCC8"> · </tspan>');};
+
+function figFlow(){
+  const RS=D.stages.filter(s=>s.ph==="RD"),PS=D.stages.filter(s=>s.ph==="MP"),LO=D.stages.filter(s=>s.ph==="LOOP");
+  let b=TX(0,12,G("第一段　R0 – R4　設計走到可以開賣","PHASE ONE · R0 – R4 · design to sellable"),"lbl");
+  RS.forEach((s,i)=>{const x=i*204;
+    b+=BX(x,26,184,96,"RD")+TX(x+16,52,s.c,"k cRD")+TX(x+16,78,G(s.zh,s.en),"t")
+      +`<text x="${x+16}" y="104" class="k">${codes(s.id,2)}</text>`;
+    if(i<4)b+=AR(x+184,74,x+201,74);});
+  b+=TX(0,158,G("第二段　量產","PHASE TWO · PRODUCTION"),"lbl");
+  PS.forEach((s,i)=>{const x=i*170;
+    b+=BX(x,172,150,96,"HW")+TX(x+14,198,s.c,"k cHW")+TX(x+14,224,G(s.zh,s.en),"t")
+      +`<text x="${x+14}" y="250" class="k">${codes(s.id,2)}</text>`;
+    if(i<5)b+=AR(x+150,220,x+167,220);});
+  b+=TX(0,304,G("兩個迴圈　跟訂單無關，自己持續運轉","TWO LOOPS · independent of orders"),"lbl");
+  LO.forEach((s,i)=>{const x=i*510;
+    b+=BX(x,318,490,72,"ADM")+TX(x+16,344,G(s.zh,s.en),"t")+TX(x+16,370,G(s.fz,s.fe),"s");});
+  return SVG(406,b);
+}
+function figGates(){
+  const rows=D.tasks.filter(x=>x.g);
+  const fail={"來料":["收不了貨，付不了錢","No receipt, no payment"],"第 1 關":["不能進系統測試","Cannot go to system test"],
+    "第 2 關":["扣機，轉問題點流程","Held, goes to the defect flow"],"第 3 關":["不能出貨","Cannot ship"]};
+  let b=TX(16,14,G("關卡","GATE"),"lbl")+TC(590,14,G("誰執行","RUNS IT"),"lbl")+TC(720,14,G("誰判定","JUDGES"),"lbl")+TX(790,14,G("沒過的後果","IF IT FAILS"),"lbl");
+  rows.forEach((x,i)=>{const y=30+i*68,s=D.stages.find(v=>v.id===x.s);
+    b+=BX(0,y,1000,58,GR(x.a))+TX(16,y+21,GN(x.g),"t")
+      +TX(16,y+41,`${s.c} ${G(s.zh,s.en)}　·　${(x.d||[]).map(dn).join("、")}`,"s")
+      +`<text x="590" y="${y+29}" text-anchor="middle" class="k c${GR(x.a)}">${x.a}</text>`
+      +`<text x="720" y="${y+29}" text-anchor="middle" class="k c${GR(x.a)}">${x.a}</text>`
+      +TX(790,y+29,fail[x.g]?G(fail[x.g][0],fail[x.g][1]):"","s");});
+  b+=TX(0,312,G("沒有一道關是自己做的人在判：SYS-2 測試、SYS-1 判定；產線包裝、HW-4 檢查放行。",
+    "No gate is judged by the person who did the work: SYS-2 tests and SYS-1 judges; the group packs and HW-4 checks and releases."),"cap");
+  return SVG(330,b);
+}
+function figTracks(){
+  const gy=[128,142,156,170];
+  let b=TX(0,10,G("四個來源","FOUR SOURCES"),"lbl");
+  D.tracks.forEach((k,i)=>{const y=22+i*62;
+    b+=BX(0,y,286,52,GR(k.rz))+TX(14,y+20,G(k.zh,k.en),"t")
+      +`<text x="14" y="${y+40}" class="k c${GR(k.rz)}">${CD(k.rz)}</text>`
+      +AR(286,y+26,318,gy[i]);});
+  b+=BX(322,96,200,108,"dk")+TC(422,124,G("P2 到料","P2 Materials"),"t ondk")
+    +TC(422,152,G("一張採購總表","One master sheet"),"ondk2")
+    +TC(422,176,G("來料檢驗","Incoming inspection"),"ondk2");
+  b+=AR(522,130,556,110)+AR(522,172,556,204);
+  b+=BX(560,80,440,58,"HW")+TX(576,100,G("量產庫位","Production location"),"t")
+    +TX(576,122,G("常備、訂單、委外的料","Stocked, order and subcontract"),"s");
+  b+=BX(560,176,440,58,"RD")+TX(576,196,G("RD 庫位","RD location"),"t")
+    +TX(576,218,G("樣品與測試料","Samples and test parts"),"s");
+  return SVG(268,b);
+}
+function figStatus(){
+  const S=EXTRA.status,cls=["RD","HW",""];let b="";
+  S.forEach((x,i)=>{const px=i*336;
+    const t=G(x.bz,x.be),cut=L==="zh"?15:34;
+    b+=BX(px,10,300,104,cls[i])+TX(px+18,36,G(x.zh,x.en),"t")
+      +TX(px+18,64,t.slice(0,cut),"s")+TX(px+18,86,t.slice(cut,cut*2),"s");
+    if(i<2)b+=AR(px+300,62,px+332,62);});
+  b+=TX(0,142,G("編號裡不寫 RD——狀態會變，編號不該變。換號會讓歷史採購紀錄、庫存餘額與追溯鏈斷在那一天。",
+    "The letters RD never go in the number: status changes, numbers should not. Renumbering breaks purchase history, stock balances and traceability on that day."),"cap");
+  return SVG(160,b);
+}
+function figSys(){
+  let b=BX(0,0,1000,68,"dk")+TC(500,26,"EverCurrent","t ondk")
+    +TC(500,50,G("串接與提醒　·　不存數字","Connects and reminds · holds no figures"),"ondk2");
+  const cols=[["Shopify",G("訂單　客戶　售價","Orders · customers · price"),"業務","ADM"],
+    [G("Odoo（暫定）","Odoo (provisional)"),G("料號　BOM　ECO　庫存　工單　檢驗","Parts · BOM · ECO · stock · work orders · inspection"),"HW-2","HW"],
+    ["Xero",G("應收　應付　成本","Receivables · payables · cost"),"財務","ADM"],
+    ["Google Drive",G("CAD 圖檔　測試照片影片　出貨存證","CAD files · test photos and video · shipping evidence"),"RD-1","RD"]];
+  cols.forEach((c,i)=>{const x=i*255;b+=AR(x+118,68,x+118,100);
+    b+=BX(x,104,235,96,c[3])+TX(x+16,127,c[0],"t")+TX(x+16,152,c[1],"s")
+      +`<text x="${x+16}" y="180" class="k c${GR(c[2])}">${CD(c[2])}</text>`;});
+  b+=TX(0,230,G("要改資料，回它所在的那個系統改。進銷存尚未選定，Odoo 為暫定，選型只影響那一欄。",
+    "To change data, go back to the system that owns it. The inventory system is undecided; Odoo is provisional and only that column depends on the choice."),"cap");
+  return SVG(248,b);
+}
+function figTl(){
+  const T=D.tl,WHO=["RD-1","HW-2","HW-2","RD-1","財務"];
+  const x0=40,step=(1000-x0*2)/(T.length-1);let b="";
+  b+=`<line x1="${x0}" y1="70" x2="${1000-x0}" y2="70" stroke="var(--line)" stroke-width="3"/>`;
+  T.forEach((t,i)=>{const x=x0+step*i,c=GR(WHO[i]),last=i===T.length-1;
+    b+=`<circle cx="${x}" cy="70" r="${last?11:8}" class="dot c${c}"/>`;
+    b+=`<text x="${x}" y="40" text-anchor="middle" class="k c${c}">${G(t.dz,t.de)}</text>`;
+    const w=G(t.zh,t.en);
+    b+=`<text x="${x}" y="104" text-anchor="middle" class="s">${w.slice(0,9)}</text>`;
+    if(w.length>9)b+=`<text x="${x}" y="124" text-anchor="middle" class="s">${w.slice(9,19)}</text>`;
+    if(w.length>19)b+=`<text x="${x}" y="144" text-anchor="middle" class="s">${w.slice(19)}</text>`;});
+  b+=TX(0,12,G("月結時程　到期各單位硬性交表","THE TIMETABLE · each unit files on time"),"lbl");
+  return SVG(164,b);
+}
+function figThree(){
+  const ins=[[G("表① 存貨變動明細","Report 1 · Stock movement"),G("料號別　進 · 耗 · 存","By part · in, consumed, on hand"),"HW-2"],
+    [G("表② BOM","Report 2 · BOM"),G("一台成品用哪些料、各幾個","Which parts a unit uses and how many"),"RD-1"],
+    [G("銷貨數量","Shipped quantity"),G("當月出貨幾台","Units shipped this month"),"業務"],
+    [G("採購金額","Purchase value"),G("單價與發票","Unit price and invoices"),"採購"]];
+  const gy=[130,148,166,184];let b="";
+  ins.forEach((c,i)=>{const y=8+i*70;
+    b+=BX(0,y,310,58,GR(c[2]))+TX(16,y+21,c[0],"t")+TX(16,y+41,c[1],"s")
+      +`<text x="294" y="${y+21}" text-anchor="end" class="k c${GR(c[2])}">${CD(c[2])}</text>`
+      +AR(310,y+29,352,gy[i]);});
+  b+=BX(356,112,214,100,"ADM")+TC(463,140,G("財務彙整","Finance consolidates"),"t")
+    +TC(463,166,G("把料耗歸到成品","Allocates material to products"),"s")+TC(463,190,G("算單位成本","Calculates unit cost"),"s");
+  b+=AR(570,160,614,160);
+  b+=BX(618,126,382,72,"dk")+TX(636,152,G("表③ 進耗存明細","Report 3 · Consumption and inventory"),"t ondk")
+    +TX(636,176,G("成品別　銷貨成本與存貨餘額","By product · cost of sales and closing stock"),"ondk2");
+  b+=TX(0,306,G("表③ 是算出來的，不是收集來的。財務不是在等三個人交東西，是在等輸入齊了才能算。",
+    "Report 3 is calculated, not collected. Finance is not waiting on people to file; it is waiting until every input is in."),"cap");
+  return SVG(324,b);
+}
+
+/* ---------- blocks ---------- */
+function figPaths(){
+  const P=EXTRA.paths;let b="";
+  b+=BX(0,84,172,72,"HW")+TX(16,110,G("來料檢驗","Incoming"),"t")
+    +`<text x="16" y="136" class="k cHW">HW-3</text>`;
+  const ys=[8,74,140,206];
+  P.forEach((c,i)=>{
+    b+=AR(172,120,222,ys[i]+27);
+    b+=`<rect x="226" y="${ys[i]}" width="470" height="54" rx="6" fill="${c.ok?"#DDEFE5":"#FBF3E8"}" stroke="${c.ok?"#98CDB1":"#E8C395"}"/>`
+      +TX(242,ys[i]+20,G(c.zh,c.en),"t")+TX(242,ys[i]+40,G(c.bz,c.be),"s");
+    if(c.ok)b+=AR(696,ys[i]+27,744,120);});
+  b+=BX(748,84,252,72,"ADM")+TX(764,110,G("帳單可以開","Bill can be raised"),"t")
+    +TX(764,136,G("合格與允收才走得到這裡","Only a pass or an acceptance"),"s");
+  b+=TX(0,286,G("退貨不付款；追加工由 HW-4 執行後回頭給 HW-3 複驗，通過才入庫。",
+    "Returns are not paid. Rework is done by HW-4 and returned to HW-3; only a pass gets into stock."),"cap");
+  return SVG(304,b);
+}
+function figChain(){
+  const st=[[G("料到廠","Material arrives"),"","",""],
+    [G("檢驗","Inspection"),G("全檢 · 抽檢 · 免檢點數","Full · sampled · exempt count"),"HW-3","HW"],
+    [G("收貨入庫","Received into stock"),G("數量與 PO 號進系統","Quantity and PO number enter the system"),"HW-2","HW"],
+    [G("對帳","Reconcile"),G("採購總表上一列對齊","One row on the master sheet"),"採購","ADM"],
+    [G("付款","Payment"),G("撥款給供應商","Supplier gets paid"),"財務","ADM"]];
+  const w=180,g=25;let b="";
+  st.forEach((c,i)=>{const x=i*(w+g);
+    b+=BX(x,26,w,92,c[3]||"")+TX(x+16,50,c[0],"t")+TX(x+16,74,c[1],"s")
+      +(c[2]?`<text x="${x+16}" y="100" class="k c${GR(c[2])}">${CD(c[2])}</text>`:"");
+    if(i<4)b+=AR(x+w,72,x+w+g-3,72);});
+  b+=TX(0,12,G("順利的時候","WHEN IT GOES WELL"),"lbl");
+  b+=TX(0,150,G("檢驗沒完成的時候","WHEN INSPECTION IS NOT DONE"),"lbl");
+  const bad=[[G("料到廠","Material arrives"),""],[G("檢驗未完成","Inspection unfinished"),""],
+    [G("收貨數量 ＝ 0","Received quantity = 0"),""],[G("對不出實收","Nothing to reconcile"),""],[G("付不了錢","No payment"),""]];
+  bad.forEach((c,i)=>{const x=i*(w+g);
+    b+=`<rect x="${x}" y="164" width="${w}" height="58" rx="6" fill="#FBF3E8" stroke="#E8C395"/>`
+      +TX(x+16,193,c[0],"t");
+    if(i<4)b+=AR(x+w,193,x+w+g-3,193);});
+  b+=TX(0,252,G("免檢件的檢驗結論就是「數量正確」，點完數就算完成，一樣往下走。",
+    "For exempt parts the inspection conclusion is simply that the count is right; once counted, the chain moves on as normal."),"cap");
+  return SVG(272,b);
+}
+function figPattern(){
+  const c=[[G("等什麼進來","WHAT COMES IN"),G("上一關交出來的東西","What the previous gate handed over"),""],
+   [G("這一關做什麼","WHAT HAPPENS HERE"),G("誰動手、誰認定過不過","Who does the work, who judges it"),""],
+   [G("交什麼出去","WHAT GOES OUT"),G("產出什麼、交給下一棒","What is produced and who receives it"),""]];
+  let b="";const w=306,g=41;
+  c.forEach((x,i)=>{const px=i*(w+g);
+    b+=BX(px,20,w,110,i===1?"dk":"")
+      +TX(px+20,50,x[0],i===1?"t ondk":"t")
+      +TX(px+20,80,x[1],i===1?"ondk2":"s");
+    if(i<2)b+=AR(px+w,75,px+w+g-4,75);});
+  b+=TX(0,164,G("下面十一關加兩個迴圈，每一關都是這三格。看懂一關就看得懂全部。",
+    "The eleven gates and two loops below all use these same three panels. Read one and you can read them all."),"cap");
+  return SVG(184,b);
+}
+function figMatrix(){
+  const grp=[{k:"ADM",zh:"行政營運",en:"Admin & Ops",ids:["業務","採購","物運","財務"]},
+             {k:"RD",zh:"RD",en:"RD",ids:["RD-1"]},
+             {k:"HW",zh:"產線 · 機構",en:"Production · Mech",ids:["HW-1","HW-2","HW-3","HW-4"]},
+             {k:"SYS",zh:"產線 · 系統",en:"Production · Sys",ids:["SYS-1","SYS-2","SYS-3"]}];
+  const cols=grp.flatMap(g=>g.ids);
+  const st=D.stages, x0=150, cw=(1000-x0)/cols.length;
+  const BAND={R0:["第一段　RD 研發","PHASE ONE · RD"],P1:["第二段　量產","PHASE TWO · PRODUCTION"],
+              LA:["兩個迴圈","TWO LOOPS"]};
+  let b="",y=52,n=0,ci=0;
+  grp.forEach(g=>{const x=x0+cw*ci,w=cw*g.ids.length;
+    b+=`<rect x="${x+2}" y="4" width="${w-4}" height="20" rx="3" class="${g.k}"/>`
+      +`<text x="${x+w/2}" y="15" text-anchor="middle" class="lbl c${g.k}">${G(g.zh,g.en)}</text>`;
+    ci+=g.ids.length;});
+  cols.forEach((c,i)=>{b+=`<text x="${x0+cw*i+cw/2}" y="38" text-anchor="middle" class="k c${GR(c)}">${CD(c)}</text>`;});
+  b+=`<line x1="0" y1="46" x2="1000" y2="46" stroke="#1D211E" stroke-width="1.4"/>`;
+  st.forEach(sg=>{
+    if(BAND[sg.id]){ y+=8;
+      b+=`<text x="0" y="${y+8}" class="lbl">${G(BAND[sg.id][0],BAND[sg.id][1])}</text>`;
+      y+=22; n=0; }
+    if(n%2===0)b+=`<rect x="0" y="${y}" width="1000" height="32" rx="4" fill="#F7F8F7" stroke="none"/>`;
+    b+=`<text x="8" y="${y+16}" class="k" style="fill:var(--ink2)">${sg.c}</text>`;
+    b+=`<text x="56" y="${y+16}" class="s">${G(sg.zh,sg.en)}</text>`;
+    cols.forEach((c,i)=>{
+      const ts=D.tasks.filter(x=>x.s===sg.id&&x.a===c); if(!ts.length)return;
+      const j=ts.some(x=>x.j);
+      b+=`<text x="${x0+cw*i+cw/2}" y="${y+17}" text-anchor="middle" class="c${GR(c)}" style="font-size:${j?23:15}px;font-weight:700">${j?"★":"●"}</text>`;
+    });
+    y+=32;n++;
+  });
+  b+=`<text x="0" y="${y+24}" class="cap">${G("★ 負責認定過不過　　●  動手執行　　空白代表那一關沒有他的事",
+    "★ decides whether it passes　　● does the work　　blank means no involvement")}</text>`;
+  return SVG(y+42,b);
+}
+function inputsOf(sid){
+  if(GATE.IN[sid])return null;
+  const idx=D.stages.findIndex(x=>x.id===sid);
+  const actors=new Set(D.tasks.filter(t=>t.s===sid).map(t=>t.a));
+  const seen={},out=[];
+  D.tasks.forEach(t=>{
+    const ti=D.stages.findIndex(x=>x.id===t.s);
+    if(ti>=idx||D.stages[ti].ph==="LOOP")return;
+    (t.to||[]).forEach(r=>{ if(!actors.has(r))return;
+      (t.d||[]).forEach(d=>{ const k=d+t.a; if(seen[k])return; seen[k]=1; out.push({d:d,from:t.a}); }); });
+  });
+  return out;
+}
+function stageBlock(s){
+  const simple=GATE.SIMPLE.includes(s.id);
+  const ts=D.tasks.filter(x=>x.s===s.id);
+  const ph=s.ph==="LOOP"?"LOOP":(s.ph==="RD"?"RD":"MP");
+
+  let inHtml;
+  if(GATE.IN[s.id]) inHtml=`<p class="plain">${G(GATE.IN[s.id][0],GATE.IN[s.id][1])}</p>`;
+  else{const ins=inputsOf(s.id)||[];
+    inHtml=ins.length?`<ul class="glist">${ins.slice(0,7).map(o=>
+      `<li>${CH(o.from)}<span>${dn(o.d)}</span></li>`).join("")}</ul>`
+      :`<p class="plain">${G("上一關過了就開始","Starts once the previous gate clears")}</p>`;}
+
+  const actHtml=`<ul class="gact">${ts.map(x=>
+    `<li>${CH(x.a)}${x.j?`<span class="jt">${G("判定","judges")}</span>`:""}<span>${G(x.zh,x.en)}</span></li>`).join("")}</ul>`;
+
+  let outHtml;
+  if(simple) outHtml=`<p class="plain">${G(GATE.HAND[s.id][0],GATE.HAND[s.id][1])}</p>`;
+  else{const seen={},docs=[];
+    ts.forEach(x=>(x.d||[]).forEach(d=>{if(seen[d])return;seen[d]=1;docs.push({d:d,to:(x.to||[])})}));
+    outHtml=`<ul class="glist">${docs.map(o=>
+      `<li><span>${dn(o.d)}<i>${dsy(o.d)}</i></span></li>`).join("")}</ul>
+      <div class="gto">${G("交給","To")} ${[...new Set(ts.flatMap(x=>x.to||[]))].map(r=>R(r).id?CH(r):`<span class="chip">${CD(r)}</span>`).join(" ")}</div>`;}
+
+  return `<div class="gate g${ph}" id="gate-${s.id}">
+    <div class="ghd"><span class="gc">${s.c}</span><h3>${G(s.zh,s.en)}</h3><em>${G(s.fz,s.fe)}</em>
+      ${s.gz?`<span class="gpass">${G("過關","Clears when")} · ${G(s.gz,s.ge)}</span>`:""}</div>
+    <div class="gbody">
+      <div class="gcol"><h5>${G("← 等什麼進來","← WHAT COMES IN")}</h5>${inHtml}</div>
+      <div class="gcol mid"><h5>${G("這一關做什麼","WHAT HAPPENS HERE")}</h5>${actHtml}</div>
+      <div class="gcol"><h5>${G("交什麼出去 →","WHAT GOES OUT →")}</h5>${outHtml}</div>
+    </div>
+    ${NOTE[s.id]?`<p class="gwhy">${G(NOTE[s.id][0],NOTE[s.id][1])}</p>`:""}</div>`;
+}
+function laneBlock(phs,title){
+  const st=D.stages.filter(s=>phs.includes(s.ph));
+  const gs=[{k:"ADM",zh:"行政營運",en:"Admin & Ops"},{k:"RD",zh:"RD-1",en:"RD-1"},
+            {k:"HW",zh:"產線 · 機構",en:"Production · Mech"},{k:"SYS",zh:"產線 · 系統",en:"Production · Sys"}];
+  const col=`grid-template-columns:98px repeat(${st.length},minmax(108px,1fr))`;
+  let h=`<div class="lanettl ${phs[0]==="RD"?"tRD":"tMP"}">${title}</div><div class="scroll"><div class="lanes">
+    <div class="lr hd" style="${col}"><div></div>${st.map(x=>
+      `<div><a href="#gate-${x.id}"><b>${x.c}</b> ${G(x.zh,x.en)}</a></div>`).join("")}</div>`;
+  gs.forEach(g=>{
+    if(!st.some(x=>D.tasks.some(t=>t.s===x.id&&GR(t.a)===g.k)))return;
+    h+=`<div class="lr g${g.k}" style="${col}"><div class="u">${G(g.zh,g.en)}</div>`;
+    st.forEach(x=>{const ts=D.tasks.filter(t=>t.s===x.id&&GR(t.a)===g.k);
+      h+=`<div class="lc">${ts.map(t=>
+        `<span class="lt"><span class="chip ${g.k}">${CD(t.a)}</span>${G(t.zh,t.en).split(/[，,、：]/)[0]}</span>`).join("")}</div>`;});
+    h+="</div>";});
+  return h+"</div></div>";
+}
+function loopBlock(){
+  return `<div class="lanettl tLO">${G("兩個迴圈　跟訂單無關，自己在轉","Two loops · independent of orders")}</div>
+   <div class="loops">${D.stages.filter(s=>s.ph==="LOOP").map(s=>{
+     const ts=D.tasks.filter(t=>t.s===s.id);
+     return `<div class="loop"><h4><a href="#gate-${s.id}">${G(s.zh,s.en)}</a>
+       <span>${G(s.fz,s.fe)}</span></h4>
+       <ul>${ts.map(t=>`<li><span class="chip ${GR(t.a)}">${CD(t.a)}</span>${G(t.zh,t.en)}</li>`).join("")}</ul></div>`;}).join("")}</div>`;
+}
+function handoffs(){
+  const out=[];
+  D.tasks.forEach(x=>(x.to||[]).forEach(r=>{
+    if(!R(r).id||GR(r)===GR(x.a))return;
+    if(!(x.d||[]).length)return;
+    out.push({s:x.s,from:x.a,doc:(x.d||[]).map(dn).join("、"),to:r});}));
+  const seen={},list=[];
+  out.forEach(o=>{const k=o.s+o.from+o.to;if(!seen[k]){seen[k]=1;list.push(o)}});
+  return list.map(o=>{const st=D.stages.find(v=>v.id===o.s);
+    const hot=EXTRA.hot.includes(o.s+"|"+o.to);
+    return `<div class="r ch${hot?" hot":""}"><a class="m gl" href="#gate-${o.s}">${st.c}</a>${CH(o.from)}
+      <div>${o.doc}</div>${CH(o.to)}</div>`;}).join("");
+}
+
+function render(){
+  document.querySelectorAll("[data-zh]").forEach(e=>e.textContent=G(e.dataset.zh,e.dataset.en));
+  document.documentElement.lang=L==="zh"?"zh-Hant":"en";
+
+  H("org",EXTRA.groups.map(g=>`<div class="ogrp a${g.k}"><h4>${G(g.zh,g.en)}</h4>
+    <div class="cap">${G(g.cz,g.ce)}</div><ul>${g.ids.map(i=>{const r=R(i);
+    return `<li>${CH(i)}<span class="nm2">${G(r.zh||i,r.en||i)}</span>${(r.rz||r.re)?`<span class="rl">${G(r.rz||"",r.re||"")}</span>`:""}</li>`;}).join("")}</ul></div>`).join(""));
+
+  H("rulelist",D.rules.map(r=>`<div class="rule"><div class="n">${r.n}</div>
+    <div><h3>${G(r.zh,r.en)}</h3><p>${G(r.bz,r.be)}</p></div></div>`).join(""));
+
+  H("figFlow",figFlow());H("figGates",figGates());H("figTracks",figTracks());
+  H("figStatus",figStatus());H("figMatrix",figMatrix());H("figPattern",figPattern());H("figChain",figChain());H("figPaths",figPaths());H("figSys",figSys());H("figThree",figThree());H("figTl",figTl());
+
+  H("gatecards",D.stages.filter(s=>s.ph!=="LOOP").map(stageBlock).join(""));
+  H("loopcards",D.stages.filter(s=>s.ph==="LOOP").map(stageBlock).join(""));
+  H("lanetables",laneBlock(["RD"],G("第一段　RD 研發","Phase one · RD"))
+    +laneBlock(["MP"],G("第二段　量產","Phase two · Production"))
+    +loopBlock());
+  H("hand",handoffs());
+
+  const fail={"來料":["收不了貨，付不了錢","No receipt, no payment"],"第 1 關":["不能進系統測試","Cannot go to system test"],
+    "第 2 關":["扣機，轉問題點流程","Held, goes to the defect flow"],"第 3 關":["不能出貨","Cannot ship"]};
+  H("__unused",D.tasks.filter(x=>x.g).map(x=>{const s=D.stages.find(v=>v.id===x.s);
+    return `<div class="r c4"><div><b>${GN(x.g)}</b>
+      <div class="m">${s.c} ${G(s.zh,s.en)}</div></div>
+      <div>${G(x.zh,x.en)}</div>
+      <div class="m">${G("紀錄","Record")} · ${(x.d||[]).map(dn).join("、")}<br>${fail[x.g]?G(fail[x.g][0],fail[x.g][1]):""}</div></div>`;}).join(""));
+
+  H("levels",`<table class="tbl"><thead><tr><th>${G("等級","Level")}</th><th>${G("適用","Applies to")}</th><th>${G("怎麼做","How")}</th></tr></thead><tbody>${D.levels.map(l=>`<tr><td><b>${G(l.zh,l.en)}</b></td><td class="sm">${G(l.dz,l.de)}</td><td class="sm">${G(l.wz,l.we)}</td></tr>`).join("")}</tbody></table>`);
+
+  H("tracks",`<table class="tbl"><thead><tr>
+     <th>${G("哪一軌","Track")}</th><th>${G("誰提","Raised by")}</th><th>${G("什麼時候提","When")}</th>
+     <th>${G("誰核准","Approved by")}</th><th>${G("進哪個庫位","Location")}</th><th>${G("成本落在哪","Cost lands in")}</th>
+    </tr></thead><tbody>${D.tracks.map(k=>`<tr>
+     <td><b>${G(k.zh,k.en)}</b></td><td>${CH(k.rz)}</td><td>${G(k.tz,k.te)}</td>
+     <td>${G(k.az,k.ae)}</td><td>${G(k.lz,k.le)}</td><td>${G(k.cz,k.ce)}</td></tr>`).join("")}</tbody></table>`);
+  H("sub",`<ol class="mini">${EXTRA.sub.map(s=>`<li>${CH(s.who)}<span>${G(s.zh,s.en)}</span></li>`).join("")}</ol>`);
+
+  {const CAT={"RD-1":["工程","Engineering"],"HW-1":["生產","Production"],"HW-2":["庫存","Stock"],
+    "HW-3":["品質","Quality"],"HW-4":["出貨","Shipping"],"SYS-1":["測試","Testing"],
+    "SYS-2":["測試","Testing"],"SYS-3":["測試","Testing"],"業務":["銷售","Sales"],
+    "採購":["採購","Purchasing"],"物運":["出貨","Shipping"],"財務":["財務","Finance"]};
+   H("sysrow",D.sys.map(sy=>{
+     const ds=D.docs.filter(d=>d.s===sy.id); if(!ds.length)return"";
+     const by={};ds.forEach(d=>{const k=G(...(CAT[d.o]||["其他","Other"]));(by[k]=by[k]||[]).push(d)});
+     const keys=Object.keys(by);
+     return `<div class="sblk${sy.tbd?" tbd":""}">
+       <div class="sbar"><span class="sname">${G(sy.zh,sy.en)}</span>
+         ${sy.now?`<span class="now">${G("現況","today")}</span>`:""}
+         <span class="scount">${keys.join(" · ")}</span></div>
+       <div class="scats">${keys.map(k=>`<div class="scat">
+         <h4>${k}</h4>
+         <ul>${by[k].map(d=>`<li class="${d.om?"om":""}"><span>${G(d.zh,d.en)}${d.om?`<i class="omb">${G("省略 · 併入 "+dn(d.om),"omitted · folded into "+dn(d.om))}</i>`:""}</span><span class="chip ${GR(d.o)}">${CD(d.o)}</span></li>`).join("")}</ul>
+       </div>`).join("")}</div></div>`;}).join(""));}
+
+  H("three",D.three.map(r=>`<div class="r cd"><b>${G(r.zh,r.en)}</b><span class="m">${G(r.uz,r.ue)}</span>
+    ${CH(r.wz)}<span class="m">${G(r.cz,r.ce)}</span></div>`).join(""));
+  {const row=o=>`<div class="r c2"><div>${o.wz.split(" ").map(CH).join(" ")}</div>
+     <div><b>${G(o.zh,o.en)}</b><div class="m">${G(o.bz,o.be)}</div></div></div>`;
+   H("other",D.other.filter(o=>!o.wz.includes(" ")).map(row).join(""));
+   H("weekly",D.other.filter(o=>o.wz.includes(" ")).map(row).join(""));}
+
+  {const GRPS=[{k:"RD",zh:"RD 設計",en:"RD"},{k:"HW",zh:"產線組 · 機構","en":"Production · Mechanical"},
+     {k:"SYS",zh:"產線組 · 系統",en:"Production · Systems"}];
+   H("rostercards",GRPS.map(g=>`<div class="rgrp"><h3 class="rgh a${g.k}">${G(g.zh,g.en)}</h3>
+     <div class="rcards">${D.roles.filter(r=>r.grp===g.k).map(r=>{
+       const ts=D.tasks.filter(x=>x.a===r.id);
+       const flow={zh:"在流程上要交的東西",en:"What you hand over along the line",
+         i:ts.map(x=>{const sg=D.stages.find(v=>v.id===x.s);
+           return [`${G(x.zh,x.en)}`,`${G(x.zh,x.en)}`,`${sg.c} ${G(sg.zh,sg.en)}`];})};
+       return `<div class="card"><div class="chd"><span class="chip ${r.grp}">${CD(r.id)}</span>
+         <b>${G(r.zh,r.en)}</b><em>${G(r.rz||"",r.re||"")}</em></div>
+         ${r.duties.concat([flow]).map(d=>`<div class="dsec">
+           <h4>${G(d.zh,d.en)}</h4>
+           <ul>${d.i.map(x=>`<li>${G(x[0],x[1])}${x[2]?`<span class="lm">${x[2]}</span>`:""}</li>`).join("")}</ul>
+         </div>`).join("")}</div>`;}).join("")}</div></div>`).join(""));}
+
+  {const by={};D.opens.forEach(o=>{const k=G(o.kz,o.ke);(by[k]=by[k]||[]).push(o)});
+  H("opens",Object.keys(by).map(k=>`<div class="grp"><h4>${k}</h4>
+     <ul class="ticks">${by[k].map(o=>`<li>${G(o.zh,o.en)}</li>`).join("")}</ul></div>`).join(""));}
+
+  H("risks",D.risks.map(r=>`<div class="rk"><h3>${G(r.zh,r.en)}</h3><p>${G(r.bz,r.be)}</p>
+    <p class="fx">${G(r.fz,r.fe)}</p></div>`).join(""));
+}
+document.getElementById("bzh").onclick=()=>{L="zh";sw()};
+document.getElementById("ben").onclick=()=>{L="en";sw()};
+function sw(){document.getElementById("bzh").setAttribute("aria-pressed",String(L==="zh"));
+  document.getElementById("ben").setAttribute("aria-pressed",String(L==="en"));render()}
+/* ================= editor ================= */
+const LBL={zh:"中文",en:"English",bz:"說明（中）",be:"說明（英）",fz:"全名（中）",fe:"全名（英）",
+ gz:"過關條件（中）",ge:"過關條件（英）",rz:"守備範圍（中）",re:"守備範圍（英）",
+ dz:"適用／日期（中）",de:"適用／日期（英）",wz:"誰／怎麼做（中）",we:"怎麼做（英）",
+ cz:"內容／成本（中）",ce:"內容／成本（英）",tz:"觸發（中）",te:"觸發（英）",
+ az:"核准（中）",ae:"核准（英）",lz:"庫位（中）",le:"庫位（英）",
+ uz:"單位（中）",ue:"單位（英）",kz:"類別（中）",ke:"類別（英）",
+ fz2:"",id:"代號",c:"代號",n:"編號",s:"所在關卡／系統",a:"誰做",j:"是否判定 (1=是)",
+ d:"產出表單 ID",to:"交給誰",t:"軌道",g:"品質關卡",o:"維護人",f:"頻率",
+ grp:"群體 ADM/RD/HW/SYS",ph:"段 RD/MP/LOOP",om:"省略·併入哪張表 ID",
+ tbd:"暫定 (1=是)",now:"現況 (1=是)",ok:"合格路徑 (1=是)",who:"誰",ids:"成員代號",
+ duties:"職掌",i:"待辦（一行一條，中英用 | 分開）",rz2:""};
+const COLS=[
+ ["流程",[["D.stages","關卡"],["D.tasks","每一關誰做什麼"],["NOTE","每一關最容易掉球"],
+          ["GATE.IN","等什麼進來（覆寫）"],["GATE.HAND","簡寫關卡交出什麼"]]],
+ ["人與表",[["D.roles","人員與職掌"],["EXTRA.groups","群體"],["D.docs","表格"],["D.sys","系統"]]],
+ ["各節內容",[["D.rules","四條規則"],["D.levels","檢驗分級"],["EXTRA.paths","來料四條路"],
+          ["D.tracks","採購四軌"],["EXTRA.status","料號狀態"],["EXTRA.sub","委外步驟"],
+          ["D.tl","月結時程"],["D.three","月結三張表"],["D.other","每月與每週"],
+          ["D.opens","待決策"],["D.risks","風險"]]]];
+let edCur="D.stages", edTimer=null;
+
+const path=k=>k.split(".").reduce((o,x)=>o[x],window.__DATA);
+const setDirty=()=>{clearTimeout(edTimer);edTimer=setTimeout(()=>{
+  D=window.__DATA.D;NOTE=window.__DATA.NOTE;GATE=window.__DATA.GATE;EXTRA=window.__DATA.EXTRA;render();},400);};
+
+function fld(label,val,multi,on){
+  const w=document.createElement("div");w.className="fld";
+  const l=document.createElement("label");l.textContent=label;
+  const inp=document.createElement(multi?"textarea":"input");
+  inp.value=val==null?"":val;
+  inp.oninput=()=>{on(inp.value);setDirty();};
+  w.append(l,inp);return w;
+}
+function objFields(obj,box){
+  Object.keys(obj).forEach(k=>{
+    const v=obj[k];
+    if(v===null||v===undefined)return;
+    if(typeof v==="string"||typeof v==="number"){
+      box.append(fld(LBL[k]||k,v,String(v).length>46,nv=>{obj[k]=(typeof v==="number"&&nv!==""&&!isNaN(nv))?+nv:nv;}));
+    }else if(Array.isArray(v)){
+      if(v.every(x=>typeof x==="string")){
+        box.append(fld((LBL[k]||k),v.join("\n"),true,nv=>{obj[k]=nv.split("\n").map(x=>x.trim()).filter(Boolean);}));
+      }else if(v.every(x=>Array.isArray(x))){
+        box.append(fld((LBL[k]||k),v.map(r=>r.join(" | ")).join("\n"),true,
+          nv=>{obj[k]=nv.split("\n").filter(Boolean).map(r=>r.split("|").map(x=>x.trim()));}));
+      }else{
+        const sub=document.createElement("div");sub.className="sub";
+        const t=document.createElement("div");t.className="sh2";t.textContent=LBL[k]||k;sub.append(t);
+        v.forEach((o,ix)=>{
+          const c=document.createElement("div");c.className="item";
+          const hd=document.createElement("div");hd.className="ihd";
+          const b=document.createElement("b");b.textContent="#"+(ix+1);hd.append(b);
+          const del=document.createElement("button");del.className="del";del.textContent="刪除";
+          del.onclick=()=>{v.splice(ix,1);setDirty();showCol(edCur);};hd.append(del);
+          c.append(hd);objFields(o,c);sub.append(c);
+        });
+        const add=document.createElement("button");add.className="addbtn";add.textContent="＋ 新增一項";
+        add.onclick=()=>{v.push(JSON.parse(JSON.stringify(v[v.length-1]||{zh:"",en:""})));setDirty();showCol(edCur);};
+        sub.append(add);box.append(sub);
+      }
+    }
+  });
+}
+function showCol(key){
+  edCur=key;
+  document.querySelectorAll(".edtabs button").forEach(b=>b.classList.toggle("on",b.dataset.k===key));
+  const host=document.getElementById("edbody");host.innerHTML="";
+  const meta=COLS.flatMap(g=>g[1]).find(x=>x[0]===key);
+  const h=document.createElement("h4");h.textContent=meta?meta[1]:key;host.append(h);
+  const n=document.createElement("p");n.className="note";
+  n.textContent="改完下面的欄位，後面的網頁會即時更新。中文欄位改了記得也改英文欄位。";host.append(n);
+  const data=path(key);
+  if(Array.isArray(data)){
+    data.forEach((o,ix)=>{
+      const c=document.createElement("div");c.className="item";
+      const hd=document.createElement("div");hd.className="ihd";
+      const b=document.createElement("b");b.textContent=(o.id||o.c||o.n||"#"+(ix+1));hd.append(b);
+      const del=document.createElement("button");del.className="del";del.textContent="刪除";
+      del.onclick=()=>{if(confirm("刪掉這一項？")){data.splice(ix,1);setDirty();showCol(key);}};hd.append(del);
+      c.append(hd);
+      if(typeof o==="string"){c.append(fld("值",o,false,nv=>{data[ix]=nv;}));}else{objFields(o,c);}
+      host.append(c);
+    });
+    const add=document.createElement("button");add.className="addbtn";add.textContent="＋ 新增一項";
+    add.onclick=()=>{const last=data[data.length-1];
+      data.push(typeof last==="string"?"":JSON.parse(JSON.stringify(last||{zh:"",en:""})));
+      setDirty();showCol(key);};
+    host.append(add);
+  }else{
+    Object.keys(data).forEach(k=>{
+      const v=data[k];
+      const c=document.createElement("div");c.className="item";
+      const hd=document.createElement("div");hd.className="ihd";
+      const b=document.createElement("b");b.textContent=k;hd.append(b);c.append(hd);
+      if(Array.isArray(v)&&v.every(x=>typeof x==="string")&&v.length===2){
+        c.append(fld("中文",v[0],v[0].length>46,nv=>{v[0]=nv;}));
+        c.append(fld("English",v[1],v[1].length>46,nv=>{v[1]=nv;}));
+      }else if(Array.isArray(v)){
+        c.append(fld("值（一行一條）",v.join("\n"),true,nv=>{data[k]=nv.split("\n").map(x=>x.trim()).filter(Boolean);}));
+      }else{c.append(fld("值",v,false,nv=>{data[k]=nv;}));}
+      host.append(c);
+    });
+  }
+}
+function buildEditor(){
+  const tabs=document.getElementById("edtabs");tabs.innerHTML="";
+  COLS.forEach(([g,list])=>{
+    const lb=document.createElement("div");lb.className="grouplbl";lb.textContent=g;tabs.append(lb);
+    list.forEach(([k,label])=>{
+      const b=document.createElement("button");b.textContent=label;b.dataset.k=k;
+      b.onclick=()=>showCol(k);tabs.append(b);
+    });
+  });
+  showCol(edCur);
+}
+document.getElementById("edopen").onclick=()=>{document.getElementById("editor").hidden=false;};
+document.getElementById("edclose").onclick=()=>{document.getElementById("editor").hidden=true;};
+document.getElementById("eddl").onclick=()=>{
+  const blob=new Blob([JSON.stringify(window.__DATA,null,1)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="data.json";a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+/* ---------- data loading ---------- */
+function boot(j){
+  D=j.D; NOTE=j.NOTE; GATE=j.GATE; EXTRA=j.EXTRA;
+  window.__DATA=j;
+  try{ render(); }catch(e){ console.error("render failed:",e); alert("內容載入失敗："+e.message); }
+  try{ buildEditor(); }catch(e){ console.error("editor failed:",e); }
+}
+fetch("data.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw 0;return r.json()})
+ .then(boot)
+ .catch(()=>{
+   document.getElementById("pick").hidden=false;
+   document.getElementById("pickfile").onchange=e=>{
+     const f=e.target.files[0]; if(!f)return;
+     const fr=new FileReader();
+     fr.onload=()=>{try{boot(JSON.parse(fr.result));document.getElementById("pick").hidden=true;}
+       catch(err){alert("data.json 讀不進來："+err.message)}};
+     fr.readAsText(f);
+   };
+ });
+</script>
+</body>
+</html>
