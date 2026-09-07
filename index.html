@@ -293,13 +293,6 @@ footer{padding:40px 0 66px;color:var(--ink3);font-size:12.5px;border-top:1px sol
 /* editor */
 .edopen{margin-left:14px;font-size:12.5px;padding:3px 11px;border:1px solid var(--line);color:var(--ink2);flex-shrink:0}
 .edopen:hover{border-color:var(--ink);color:var(--ink)}
-.pick{position:fixed;inset:0;z-index:200;background:rgba(255,255,255,.97);display:flex;align-items:center;justify-content:center}
-.pickbox{border:1px solid var(--line);padding:28px 32px;max-width:460px}
-.pickbox h3{font-size:18px;margin-bottom:8px}
-.pickbox p{color:var(--ink2);font-size:15px;margin:0 0 14px}
-.pickbox .why2{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--rd);
- background:var(--rdbg);padding:8px 11px;margin-bottom:14px;word-break:break-all}
-.pickrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
 #editor{position:fixed;inset:0;z-index:150;background:#fff;display:flex;flex-direction:column}
 .edbar{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .edbar b{font-size:16px}
@@ -308,6 +301,14 @@ footer{padding:40px 0 66px;color:var(--ink3);font-size:12.5px;border-top:1px sol
 .edbtn:hover{border-color:var(--ink);color:var(--ink)}
 .edbtn.pri{background:var(--ink);color:#fff;border-color:var(--ink)}
 .edmain{flex:1;display:grid;grid-template-columns:210px 1fr;min-height:0}
+.copybox{position:fixed;inset:0;z-index:180;background:rgba(29,33,30,.5);display:flex;align-items:center;justify-content:center;padding:32px}
+.copyin{background:#fff;border:1px solid var(--line);width:min(860px,100%);max-height:100%;display:flex;flex-direction:column}
+.copyhd{display:flex;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.copyhd b{font-size:16px}
+.copywhy{font-size:13px;color:var(--rd);margin-right:auto}
+.copyhint{margin:0;padding:12px 18px;font-size:13.5px;color:var(--ink2);border-bottom:1px solid var(--line2)}
+.copyin textarea{flex:1;min-height:320px;border:0;padding:14px 18px;font-family:"IBM Plex Mono",monospace;
+ font-size:12px;line-height:1.5;resize:none;color:var(--ink);outline:none}
 .edtabs{border-right:1px solid var(--line);overflow-y:auto;padding:12px 0}
 .edtabs button{display:block;width:100%;text-align:left;padding:8px 18px;font-size:14px;color:var(--ink2)}
 .edtabs button:hover{background:var(--bg2);color:var(--ink)}
@@ -352,25 +353,23 @@ nav{display:none}section{page-break-inside:avoid}}
  <button id="edopen" class="edopen" title="編輯內容" hidden>編輯</button>
   <span class="lang"><button id="bzh" aria-pressed="true">中</button><button id="ben" aria-pressed="false">EN</button></span>
 </div></nav>
-<div id="pick" hidden class="pick">
- <div class="pickbox">
-  <h3>載入不到 data.json</h3>
-  <p id="pickwhy" class="why2"></p>
-  <p>如果是從網址開啟，通常是檔案還沒上傳、或部署還沒跑完。<br>
-     如果是用檔案直接打開（file://），瀏覽器不允許讀取旁邊的檔案，請手動選一次。</p>
-  <div class="pickrow">
-   <button id="pickretry" class="edbtn pri">重試</button>
-   <input type="file" id="pickfile" accept=".json">
-  </div>
- </div>
-</div>
-
 <div id="editor" hidden>
  <div class="edbar">
   <b>編輯內容</b>
-  <span class="edhint">改完按「下載 data.json」，再把檔案拖回 GitHub 取代舊的</span>
-  <button id="eddl" class="edbtn pri">下載 data.json</button>
+  <span class="edhint">改完按「下載 data.js」，再把檔案拖回 GitHub 取代舊的</span>
+  <button id="eddl" class="edbtn pri">下載 data.js</button>
+  <button id="edcopy" class="edbtn">改用複製</button>
   <button id="edclose" class="edbtn">關閉</button>
+ </div>
+ <div id="copybox" hidden class="copybox">
+  <div class="copyin">
+   <div class="copyhd"><b>data.js 內容</b>
+    <span id="copywhy" class="copywhy"></span>
+    <button id="copybtn" class="edbtn pri">全部複製</button>
+    <button id="copyclose" class="edbtn">關閉</button></div>
+   <p class="copyhint">複製後到 GitHub 點 <code>data.js</code> → 鉛筆圖示 → 全選貼上 → Commit changes。</p>
+   <textarea id="copyta" spellcheck="false" readonly></textarea>
+  </div>
  </div>
  <div class="edmain">
   <nav class="edtabs" id="edtabs"></nav>
@@ -503,6 +502,7 @@ nav{display:none}section{page-break-inside:avoid}}
 </section>
 <footer><span data-zh="代號版，對應真人後交辦。改流程只需改本檔案內的資料段，所有圖表與清單自動更新。" data-en="Code version; assign once mapped to people. Edit the data block inside this file and every diagram and list updates itself.">代號版，對應真人後交辦。改流程只需改本檔案內的資料段，所有圖表與清單自動更新。</span></footer>
 </div>
+<script src="data.js"></script>
 <script>
 let D,NOTE,GATE,EXTRA;
 const CODE={"業務":"SLS","採購":"PUR","物運":"LOG","財務":"FIN"};
@@ -1030,10 +1030,34 @@ function buildEditor(){
 })();
 document.getElementById("edopen").onclick=()=>{document.getElementById("editor").hidden=false;};
 document.getElementById("edclose").onclick=()=>{document.getElementById("editor").hidden=true;};
+function edText(){ return "window.__DATA = "+JSON.stringify(window.__DATA,null,1)+";\n"; }
 document.getElementById("eddl").onclick=()=>{
-  const blob=new Blob([JSON.stringify(window.__DATA,null,1)],{type:"application/json"});
-  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="data.json";a.click();
-  URL.revokeObjectURL(a.href);
+  const txt=edText();
+  try{
+    const blob=new Blob([txt],{type:"text/javascript;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url; a.download="data.js"; a.rel="noopener";
+    a.style.position="fixed"; a.style.opacity="0";
+    document.body.appendChild(a);          // 必須在頁面上才會觸發下載
+    a.click();
+    setTimeout(()=>{ a.remove(); URL.revokeObjectURL(url); },4000);  // 太早 revoke 會中斷下載
+  }catch(e){ showCopy(txt, "下載被瀏覽器阻擋了（"+e.message+"）"); }
+};
+document.getElementById("edcopy").onclick=()=>showCopy(edText());
+function showCopy(txt,why){
+  const box=document.getElementById("copybox");
+  document.getElementById("copywhy").textContent=why||"";
+  const ta=document.getElementById("copyta");
+  ta.value=txt; box.hidden=false; ta.focus(); ta.select();
+}
+document.getElementById("copyclose").onclick=()=>{document.getElementById("copybox").hidden=true;};
+document.getElementById("copybtn").onclick=async()=>{
+  const ta=document.getElementById("copyta");
+  try{ await navigator.clipboard.writeText(ta.value);
+       document.getElementById("copybtn").textContent="已複製";
+       setTimeout(()=>{document.getElementById("copybtn").textContent="全部複製";},1600);
+  }catch(e){ ta.select(); document.execCommand&&document.execCommand("copy"); }
 };
 
 /* ---------- data loading ---------- */
@@ -1043,31 +1067,11 @@ function boot(j){
   try{ render(); }catch(e){ console.error("render failed:",e); alert("內容載入失敗："+e.message); }
   try{ buildEditor(); }catch(e){ console.error("editor failed:",e); }
 }
-function load(){
-  const url=new URL("data.json",location.href).href;
-  return fetch(url,{cache:"no-store"}).then(r=>{
-    if(!r.ok)throw new Error("HTTP "+r.status+"　"+url);
-    return r.text();
-  }).then(txt=>{
-    let j; try{ j=JSON.parse(txt); }
-    catch(e){ throw new Error("data.json 格式有問題：" + e.message); }
-    boot(j); document.getElementById("pick").hidden=true;
-  });
-}
-load().catch(err=>{
-  const box=document.getElementById("pick");
-  box.hidden=false;
-  document.getElementById("pickwhy").textContent=err.message;
-  document.getElementById("pickretry").onclick=()=>load().catch(e=>{
-    document.getElementById("pickwhy").textContent=e.message;});
-  document.getElementById("pickfile").onchange=e=>{
-    const f=e.target.files[0]; if(!f)return;
-    const fr=new FileReader();
-    fr.onload=()=>{ try{ boot(JSON.parse(fr.result)); box.hidden=true; }
-      catch(err2){ document.getElementById("pickwhy").textContent="讀不進來："+err2.message; } };
-    fr.readAsText(f);
-  };
-});
+if(!window.__DATA){
+  document.body.innerHTML='<div style="padding:60px 32px;font-family:sans-serif">'
+    +'<h2 style="margin:0 0 10px">載入不到 data.js</h2>'
+    +'<p style="color:#666">index.html 旁邊要有 data.js。把兩個檔案放在同一層即可。</p></div>';
+}else{ boot(window.__DATA); }
 </script>
 </body>
 </html>
